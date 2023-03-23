@@ -1,21 +1,20 @@
 ---
 stages:
-  - checks
+  - lint
   - test
+  - molecule
   - changes
   - push
 
 variables:
   GITHUB_USER: lotusnoir
 
-include:
-  - template: Security/Secret-Detection.gitlab-ci.yml
 
 ##################################################
-# SYNTAX CHECKS
+# LINT
 ##################################################
 yamllint:
-  stage: checks
+  stage: lint
   image: sdesbure/yamllint
   before_script:
     - yamllint --version
@@ -23,16 +22,23 @@ yamllint:
     - yamllint .
 
 ansible-lint:
-  stage: checks
+  stage: lint
   image: lotusnoir/ansible_play
   script:
     - ansible-lint .
+
+
+##################################################
+# TEST / SECU
+##################################################
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
 
 ######################################################
 # RUN MOLECULE FOR EACH DISTRIB
 ######################################################
 molecule_ubuntu18:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -45,7 +51,7 @@ molecule_ubuntu18:
   script:
     - MOLECULE_DISTRIB=ubuntu18 molecule test
 molecule_ubuntu20:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -58,7 +64,7 @@ molecule_ubuntu20:
   script:
     - MOLECULE_DISTRIB=ubuntu20 molecule test
 molecule_ubuntu22:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -70,7 +76,7 @@ molecule_ubuntu22:
   script:
     - MOLECULE_DISTRIB=ubuntu22 molecule test
 molecule_debian10:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -82,7 +88,7 @@ molecule_debian10:
   script:
     - MOLECULE_DISTRIB=debian10 molecule test
 molecule_debian11:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -94,7 +100,7 @@ molecule_debian11:
   script:
     - MOLECULE_DISTRIB=debian11 molecule test
 molecule_centos7:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -106,7 +112,7 @@ molecule_centos7:
   script:
     - MOLECULE_DISTRIB=centos7 molecule test
 molecule_rocky8:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -118,7 +124,7 @@ molecule_rocky8:
   script:
     - MOLECULE_DISTRIB=rocky8 molecule test
 molecule_oraclelinux7:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -130,7 +136,7 @@ molecule_oraclelinux7:
   script:
     - MOLECULE_DISTRIB=oraclelinux7 molecule test
 molecule_oraclelinux8:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -142,7 +148,7 @@ molecule_oraclelinux8:
   script:
     - MOLECULE_DISTRIB=oraclelinux8 molecule test
 molecule_oraclelinux9:
-  stage: test
+  stage: molecule
   image: lotusnoir/molecule_play
   services:
     - docker:dind
@@ -159,7 +165,7 @@ molecule_oraclelinux9:
 ######################################################
 changelog:
   stage: changes
-  image: node:latest
+  image: node:19
   needs:
     - molecule_ubuntu18
     - molecule_ubuntu20
@@ -180,14 +186,6 @@ changelog:
   script:
     - auto-changelog -t keepachangelog --sort-commits date-desc --hide-empty-releases --hide-credit -l 10 -b 10
 
-release:
-  image: node:12-buster-slim
-  stage: changes
-  before_script:
-    - apt-get update && apt-get install -y --no-install-recommends git-core ca-certificates
-    - npm install -g semantic-release @semantic-release/gitlab
-  script:
-    - semantic-release
 
 ##################################################
 # PUSH CODE WHEN ALL TEST OK
