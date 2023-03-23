@@ -8,6 +8,8 @@ stages:
 variables:
   GITHUB_USER: lotusnoir
 
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
 
 ##################################################
 # SYNTAX CHECKS
