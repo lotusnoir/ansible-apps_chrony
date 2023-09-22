@@ -1,3 +1,5 @@
+{{ ansible_managed | comment }}
+
 {% for item in chrony_allow_hosts %}
 allow {{ item }}
 {% endfor %}

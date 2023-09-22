@@ -6,9 +6,9 @@
     update_cache: true
     cache_valid_time: "{{ '3600' if ansible_facts.pkg_mgr == 'apt' else omit }}"
   become: true
-  register: result
-  until: result is not failed
-  retries: 10
+  register: pkg_install
+  until: pkg_install is not failed
+  retries: 3
   delay: 10
 
 - name: "Configuring Chrony"
@@ -17,7 +17,7 @@
     dest: "{{ chrony_config }}"
     owner: root
     group: root
-    mode: u=rw,g=r,o=r
+    mode: '0644'
   become: true
   notify:
     - restart {{ chrony_service }}
