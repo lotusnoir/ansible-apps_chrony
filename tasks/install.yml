@@ -20,4 +20,4 @@
     mode: '0644'
   become: true
   notify:
-    - restart {{ chrony_service }}
+    - "Restart chrony"
