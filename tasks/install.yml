@@ -3,7 +3,6 @@
   ansible.builtin.package:
     name: chrony
     state: present
-    update_cache: true
   become: true
   register: pkg_result
   retries: 12
