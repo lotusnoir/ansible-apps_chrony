@@ -1,4 +1,6 @@
 ---
+chrony_daemon_opts: "-F 1"
+
 # Optionally specify a host, subnet, or network from which to allow NTP
 # connections to a machine acting as NTP server
 chrony_allow_hosts:

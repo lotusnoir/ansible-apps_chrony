@@ -19,3 +19,14 @@
   become: true
   notify:
     - "Restart chrony"
+
+- name: "Configuring Chrony default daemon opts"
+  ansible.builtin.template:
+    src: chrony.default.j2
+    dest: "/etc/default/chrony"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify:
+    - "Restart chrony"
