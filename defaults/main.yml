@@ -7,10 +7,9 @@ chrony_allow_hosts:
   - 192.168/16
   - 172.16/12
 
-
 chrony_dumpdir: /var/lib/chrony
 
-#If set to 0 ignore stratum in source selection with variable stratumweight 0
+# If set to 0 ignore stratum in source selection with variable stratumweight 0
 chrony_local_stratum: 0
 
 chrony_log:
