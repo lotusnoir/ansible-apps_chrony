@@ -4,7 +4,7 @@ galaxy_info:
   role_name: apps_chrony
   description: "Configures the time server chrony"
   license: "Apache License, Version 2.0"
-  min_ansible_version: 2.8
+  min_ansible_version: "2.8"
 
   platforms:
     - name: "Ubuntu"
