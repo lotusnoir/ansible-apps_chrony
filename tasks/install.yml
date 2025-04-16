@@ -9,13 +9,23 @@
   delay: 10
   until: pkg_result is success
 
+- name: "Ensure log directories exist"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: adm
+    mode: "2755"
+  with_items:
+    - "{{ chrony_logdir }}"
+
 - name: "Configuring Chrony"
   ansible.builtin.template:
     src: chrony.conf.j2
     dest: "{{ chrony_config }}"
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   become: true
   notify:
     - "Restart chrony"
@@ -26,7 +36,7 @@
     dest: "/etc/default/chrony"
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   become: true
   notify:
     - "Restart chrony"
