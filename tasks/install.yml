@@ -1,30 +1,39 @@
 ---
-- name: "Install Chrony"
-  ansible.builtin.package:
-    name: chrony
-    state: present
-  become: true
-  register: pkg_result
-  retries: 12
-  delay: 10
-  until: pkg_result is success
+- name: "Check for binary"
+  ansible.builtin.stat:
+    path: /usr/sbin/chronyd
+  changed_when: false
+  register: __installed_bin
 
-- name: "Ensure log directories exist"
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    owner: root
-    group: adm
-    mode: "2755"
-  with_items:
-    - "{{ chrony_logdir }}"
+- name: "Install tasks"
+  when: (not __installed_bin.stat.exists) or chrony_install_force
+  block:
+    - name: "Install Chrony"
+      ansible.builtin.package:
+        name: chrony
+        state: present
+      become: true
+      register: pkg_result
+      retries: 12
+      delay: 10
+      until: pkg_result is success
+
+    - name: "Ensure log directories exist"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ chrony_user }}"
+        group: "{{ chrony_group }}"
+        mode: "2755"
+      loop:
+        - "{{ chrony_logdir }}"
 
 - name: "Configuring Chrony"
   ansible.builtin.template:
     src: chrony.conf.j2
     dest: "{{ chrony_config }}"
-    owner: root
-    group: root
+    owner: "{{ chrony_user }}"
+    group: "{{ chrony_group }}"
     mode: "0644"
   become: true
   notify:
@@ -34,8 +43,8 @@
   ansible.builtin.template:
     src: chrony.default.j2
     dest: "/etc/default/chrony"
-    owner: root
-    group: root
+    owner: "{{ chrony_user }}"
+    group: "{{ chrony_group }}"
     mode: "0644"
   become: true
   notify:
