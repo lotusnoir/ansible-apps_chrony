@@ -23,7 +23,7 @@
 
 Configures the time server chrony
 
-install time with src = 1/run 20.25s -  2/run 6.60s
+install time = 1/run 20.25s -  2/run 6.60s
 
 
 ## Requirements

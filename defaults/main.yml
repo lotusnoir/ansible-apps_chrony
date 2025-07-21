@@ -1,8 +1,8 @@
 ---
 ### Install
+chrony_install_force: false
 chrony_group: "{% if ansible_os_family == 'RedHat' %}chrony{% else %}_chrony{% endif %}"
 chrony_user: "{% if ansible_os_family == 'RedHat' %}chrony{% else %}_chrony{% endif %}"
-chrony_install_force: false
 chrony_logdir: "/var/log/chrony"
 
 ### Config

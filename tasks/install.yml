@@ -13,10 +13,10 @@
         name: chrony
         state: present
       become: true
-      register: pkg_result
+      register: __pkg_result
       retries: 12
       delay: 10
-      until: pkg_result is success
+      until: __pkg_result is success
 
     - name: "Ensure log directories exist"
       ansible.builtin.file:
@@ -32,7 +32,7 @@
 - name: "Configuring Chrony"
   ansible.builtin.template:
     src: chrony.conf.j2
-    dest: "{{ chrony_config }}"
+    dest: "{{ _chrony_config }}"
     owner: "{{ chrony_user }}"
     group: "{{ chrony_group }}"
     mode: "0644"
