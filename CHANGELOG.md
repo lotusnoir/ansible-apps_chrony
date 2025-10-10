@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0](https://gitlab.pleal.ovh/ansible-roles_base/ansible-apps_chrony/compare/3.1.0...3.2.0) - 2025-10-10
+
+### Commits
+
+- doc: update changelog [`ddc92ad`](https://gitlab.pleal.ovh/ansible-roles_base/ansible-apps_chrony/commit/ddc92ade52bb17fdfa901d4672f594e49df5719f)
+
 ## [3.1.0](https://gitlab.pleal.ovh/ansible-roles_base/ansible-apps_chrony/compare/3.0.0...3.1.0) - 2025-10-10
 
 ### Commits
