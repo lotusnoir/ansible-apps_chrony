@@ -22,10 +22,6 @@
 ## Description
 
 Configures the time server chrony
-
-install time = 1/run 20.25s -  2/run 6.60s
-
-
 ## Requirements
 
 none
@@ -43,6 +39,7 @@ See [variables](/defaults/main.yml) for more details.
           gather_facts: true
           roles:
             - role: ansible-apps_chrony
+
 
 ## License
 

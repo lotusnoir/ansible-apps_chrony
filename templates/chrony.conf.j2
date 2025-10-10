@@ -6,27 +6,26 @@ allow {{ item }}
 {% endfor %}
 {% endif %}
 
-driftfile {{ chrony_driftfile }}
+driftfile /var/lib/chrony/chrony.drift
 dumpdir {{ chrony_dumpdir }}
-keyfile {{ _chrony_keyfile }}
-makestep {{ chrony_makestep }}
-{% if chrony_dumponexit is sameas true %}
 dumponexit
-{% endif %}
+keyfile /etc/chrony/chrony.keys
+
 {% if chrony_local_stratum is defined and chrony_local_stratum > 0 %}
 local stratum {{ chrony_local_stratum }}
 {% else %}
 stratumweight 0
 {% endif %}
-{% if chrony_noclientlog is sameas true %}
+
 # Disable logging of client accesses.
 noclientlog
-{% endif %}
 
 log {{ chrony_log|join(' ') }}
 # Send a message to syslog if a clock adjustment is larger than 0.5 seconds.
-logchange {{ chrony_logchange }}
+logchange 0.5
 logdir {{ chrony_logdir }}
+
+makestep 1 -1
 
 {% if chrony_rtcsync_enabled | bool %}
 # Enable kernel RTC synchronization.

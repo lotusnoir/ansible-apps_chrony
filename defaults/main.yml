@@ -1,29 +1,25 @@
 ---
-### Install
-chrony_install_force: false
-chrony_group: "{% if ansible_os_family == 'RedHat' %}chrony{% else %}_chrony{% endif %}"
-chrony_user: "{% if ansible_os_family == 'RedHat' %}chrony{% else %}_chrony{% endif %}"
-chrony_logdir: "/var/log/chrony"
-
-### Config
-chrony_backup_files: true
-chrony_noclientlog: true
-chrony_driftfile: "/var/lib/chrony/chrony.drift"
 chrony_daemon_opts: "-F 1"
+
+### Config chrony.conf
 chrony_allow_hosts:
   - 10/8
   - 192.168/16
   - 172.16/12
-chrony_dumpdir: "/var/lib/chrony"
-chrony_dumponexit: true
+
+chrony_dumpdir: /var/lib/chrony
+
 # If set to 0 ignore stratum in source selection with variable stratumweight 0
 chrony_local_stratum: 0
-chrony_logchange: 0.5
-chrony_makestep: "1 -1"
+
 chrony_log:
   - tracking
   - measurements
   - statistics
+
+# This directive allows the directory where log files are written to be specified
+chrony_logdir: /var/log/chrony
+
 chrony_ntp_servers:
   - server: 0.debian.pool.ntp.org
     options:
@@ -45,5 +41,6 @@ chrony_ntp_servers:
       - option: iburst
       - option: minpoll
         val: 8
+
 # Flag to control if the real time clock is to be kept synchronized.
 chrony_rtcsync_enabled: true
