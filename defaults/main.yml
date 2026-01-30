@@ -18,6 +18,7 @@ chrony_dumponexit: true
 # If set to 0 ignore stratum in source selection with variable stratumweight 0
 chrony_local_stratum: 0
 chrony_makestep: "1 -1"
+chrony_keyfile_enabled: false
 
 chrony_noclientlog: true
 chrony_log:

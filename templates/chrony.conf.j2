@@ -11,15 +11,14 @@
 
 {%   endif %}
 {% endfor %}
-
 {% if (chrony_allow_hosts is defined and chrony_allow_hosts | length > 0) or (chrony_deny_hosts is defined and chrony_deny_hosts | length > 0) %}
+
 ##################################
 # Internal Clients
 ##################################
 {% for item in chrony_allow_hosts %}
 allow {{ item }}
 {% endfor %}
-{% endif %}
 {% for item in chrony_deny_hosts %}
 deny {{ item }}
 {% endfor %}
@@ -30,7 +29,9 @@ deny {{ item }}
 ##################################
 driftfile {{ chrony_driftfile }}
 dumpdir {{ chrony_dumpdir }}
+{% if chrony_keyfile_enabled | bool %}
 keyfile {{ _chrony_keyfile }}
+{% endif %}
 
 ##################################
 # Initial Synchronisation
