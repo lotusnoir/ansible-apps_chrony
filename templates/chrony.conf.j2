@@ -1,38 +1,8 @@
 {{ ansible_managed | comment }}
 
-{% if chrony_allow_hosts is defined and chrony_allow_hosts | length > 0 %}
-{% for item in chrony_allow_hosts %}
-allow {{ item }}
-{% endfor %}
-{% endif %}
-
-driftfile {{ chrony_driftfile }}
-dumpdir {{ chrony_dumpdir }}
-keyfile {{ _chrony_keyfile }}
-makestep {{ chrony_makestep }}
-{% if chrony_dumponexit is sameas true %}
-dumponexit
-{% endif %}
-{% if chrony_local_stratum is defined and chrony_local_stratum > 0 %}
-local stratum {{ chrony_local_stratum }}
-{% else %}
-stratumweight 0
-{% endif %}
-{% if chrony_noclientlog is sameas true %}
-# Disable logging of client accesses.
-noclientlog
-{% endif %}
-
-log {{ chrony_log|join(' ') }}
-# Send a message to syslog if a clock adjustment is larger than 0.5 seconds.
-logchange {{ chrony_logchange }}
-logdir {{ chrony_logdir }}
-
-{% if chrony_rtcsync_enabled | bool %}
-# Enable kernel RTC synchronization.
-rtcsync
-{% endif %}
-
+##################################
+# NTP Servers
+##################################
 {% for item in chrony_ntp_servers %}
 {%   if item['options'] is not defined %}
 {{ item['type'] | default('server') }} {{ item['server'] }}
@@ -41,3 +11,57 @@ rtcsync
 
 {%   endif %}
 {% endfor %}
+
+{% if (chrony_allow_hosts is defined and chrony_allow_hosts | length > 0) or (chrony_deny_hosts is defined and chrony_deny_hosts | length > 0) %}
+##################################
+# Internal Clients
+##################################
+{% for item in chrony_allow_hosts %}
+allow {{ item }}
+{% endfor %}
+{% endif %}
+{% for item in chrony_deny_hosts %}
+deny {{ item }}
+{% endfor %}
+{% endif %}
+
+##################################
+# Files and States
+##################################
+driftfile {{ chrony_driftfile }}
+dumpdir {{ chrony_dumpdir }}
+keyfile {{ _chrony_keyfile }}
+
+##################################
+# Initial Synchronisation
+##################################
+makestep {{ chrony_makestep }}
+{% if chrony_dumponexit is sameas true %}
+dumponexit
+{% endif %}
+{% if chrony_local_stratum is defined and chrony_local_stratum > 0 %}
+local stratum {{ chrony_local_stratum }}
+{% endif %}
+
+##################################
+# Logs
+##################################
+{% if chrony_noclientlog is sameas true %}
+# Disable logging of individual client accesses
+noclientlog
+{% endif %}
+log {{ chrony_log|join(' ') }}
+# Send a message to syslog if a clock adjustment is larger than {{ chrony_logchange }} seconds.
+logchange {{ chrony_logchange }}
+logdir {{ chrony_logdir }}
+
+##################################
+# Hardware Synchronisation
+##################################
+{% if chrony_rtcsync_enabled | bool %}
+# Enable kernel RTC synchronization.
+rtcsync
+{% endif %}
+{% if chrony_burst_enabled | bool %}
+burst
+{% endif %}
