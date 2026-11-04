@@ -45,5 +45,3 @@
       when:
         - ansible_facts.distribution == 'Ubuntu'
         - ansible_facts.distribution_major_version == '26'
-  roles:
-    - role: lotusnoir.system_repo_epel
