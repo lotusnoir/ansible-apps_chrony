@@ -1,0 +1,127 @@
+---
+stages:
+  - changes
+  - push
+  - trigger
+
+variables:
+  GITHUB_USER: lotusnoir
+  ANSIBLE_REMOTE_TMP: /tmp
+  PY_COLORS: 1
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  key: "${CI_PROJECT_NAME}-deps"
+  paths:
+    - .cache/pip
+    - .ansible/
+
+######################################################
+# GENERATE CHANGELOG FILE
+######################################################
+changelog:
+  stage: changes
+  image: lotusnoir/gitlab_pipeline_bot:latest
+  artifacts:
+    paths:
+      - CHANGELOG.md
+      - ansible-apps_chrony/
+    expire_in: 1 day
+  before_script:
+    - git config --global user.name "CI Bot"
+    - git config --global user.email "ci@${CI_SERVER_HOST}"
+
+  script:
+    # 1️⃣ Clone GitHub repository (source of truth) — partial clone: full history/tags, no blobs
+    - mkdir -p ~/.ssh
+    - echo "$GITHUB_USER_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+    - eval $(ssh-agent -s)
+    - ssh-add ~/.ssh/id_ed25519
+    - rm -rf ansible-apps_chrony
+    - git clone git@github.com:${GITHUB_USER}/ansible-apps_chrony.git ansible-apps_chrony
+    - cd ansible-apps_chrony
+
+    # 2️⃣ Merge local GitLab changes as working tree diff (no commits)
+    - rsync -av --exclude .git --exclude .cache --exclude .ansible --exclude ansible-apps_chrony "${CI_PROJECT_DIR}/" ./
+
+    # 3️⃣ Skip changelog if last commit is already a changelog
+    - LAST_MSG="$(git log -1 --pretty=%B || echo '')"
+    - |
+      if echo "$LAST_MSG" | grep -qiE "changelog|update changelog|maj changelog"; then
+        echo "⚠️ Last commit is a changelog, skipping."
+        echo "skip" > CHANGELOG.md
+        exit 0
+      fi
+
+    # 4️⃣ Debug: show last tags
+    - echo "🔖 Tags present on GitHub branch:"
+    - git tag --sort=creatordate | tail -n 10
+
+    # 5️⃣ Generate changelog based only on GitHub history
+    - auto-changelog \
+        -t keepachangelog \
+        --commit-url "https://github.com/${GITHUB_USER}/ansible-apps_chrony/commit/{{hash}}" \
+        --issue-url "" \
+        --sort-commits date-desc \
+        --hide-empty-releases \
+        --hide-credit \
+        -b 50
+
+    # 6️⃣ Copy changelog to CI project root (artifact also keeps ansible-apps_chrony/ for reuse in push stage)
+    - cp CHANGELOG.md ${CI_PROJECT_DIR}/
+
+##################################################
+# PUSH CODE WHEN ALL TEST OK
+##################################################
+push_src_on_github:
+  stage: push
+  image: lotusnoir/gitlab_pipeline_bot:latest
+  needs:
+    - changelog
+  before_script:
+    - eval $(ssh-agent -s)
+    - echo "${GITHUB_USER_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tUser ansible\n\tStrictHostKeyChecking no\n\tForwardAgent yes\n\n" > ~/.ssh/config
+    - git config --global user.email "${GITHUB_USER_EMAIL}"
+    - git config --global user.name "${GITHUB_USER}"
+    - git config --global init.defaultBranch main
+    - COMMENT=$(git log -1 --pretty=%B | head -1)
+  script:
+    - if grep -q "^skip" CHANGELOG.md 2>/dev/null; then
+        echo "⚠️  Changelog marqué 'skip' — aucun push GitHub effectué.";
+        exit 0;
+      fi
+    # Reuse the repo already cloned+merged in the changelog job (artifact), no re-clone needed
+    - cd ansible-apps_chrony
+    - git add -A
+    # - git diff --quiet && echo "✅ Aucun changement à pousser." && exit 0
+    - git commit -m "${COMMENT}" || echo "No changes, nothing to commit!"
+    - git push --follow-tags
+
+##################################################
+# TRIGGER COLLECTION GENERATION
+##################################################
+trigger_collection:
+  stage: trigger
+  needs:
+    - push_src_on_github
+
+  trigger:
+    project: ansible-roles_base/ansible-collection-base
+    branch: main
+    strategy: depend
+
+  rules:
+    # .gitlab-ci.yml uniquement → ne pas déclencher
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      changes:
+        - .gitlab-ci.yml
+      when: never
+
+    # Tout autre changement → déclencher
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
