@@ -1,5 +1,6 @@
 ---
 stages:
+  - molecule
   - changes
   - push
   - trigger
@@ -17,11 +18,124 @@ cache:
     - .ansible/
 
 ######################################################
+# DEFINE CHANGES RULES
+######################################################
+.molecule_job_template: &molecule_job_template
+  stage: molecule
+  rules:
+    # Exécuter uniquement si un fichier pertinent change
+    - changes:
+#        - ".gitlab-ci.yml"
+        - "defaults/**"
+        - "files/**"
+        - "handlers/**"
+        - "meta/**"
+        - "tasks/**"
+        - "templates/**"
+        - "vars/**"
+        - "molecule/*/**"   # Inclut tous les fichiers dans chaque scenario
+        - "molecule/*"      # Inclut le scenario lui-même (utile pour playbook.yml)
+    - when: never           # Sinon, ne pas exécuter
+
+######################################################
+# RUN MOLECULE FOR EACH DISTRIB
+######################################################
+molecule_debian12:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  script:
+    - MOLECULE_DISTRIB=debian12 molecule test
+molecule_debian11:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  script:
+    - MOLECULE_DISTRIB=debian11 molecule test
+molecule_debian13:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  script:
+    - MOLECULE_DISTRIB=debian13 molecule test
+molecule_oraclelinux10:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  tags:
+    - avx2
+  script:
+    - MOLECULE_DISTRIB=oraclelinux10 molecule test
+molecule_oraclelinux8:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.15.13
+  script:
+    - MOLECULE_DISTRIB=oraclelinux8 molecule test
+molecule_oraclelinux9:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  script:
+    - MOLECULE_DISTRIB=oraclelinux9 molecule test
+molecule_rocky10:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  tags:
+    - avx2
+  script:
+    - MOLECULE_DISTRIB=rocky10 molecule test
+molecule_rocky8:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.15.13
+  script:
+    - MOLECULE_DISTRIB=rocky8 molecule test
+molecule_rocky9:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  script:
+    - MOLECULE_DISTRIB=rocky9 molecule test
+molecule_ubuntu22:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  script:
+    - MOLECULE_DISTRIB=ubuntu22 molecule test
+molecule_ubuntu24:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  script:
+    - MOLECULE_DISTRIB=ubuntu24 molecule test
+molecule_ubuntu26:
+  <<: *molecule_job_template
+  image: lotusnoir/molecule_play:2.18.11
+  script:
+    - MOLECULE_DISTRIB=ubuntu26 molecule test
+
+######################################################
 # GENERATE CHANGELOG FILE
 ######################################################
 changelog:
   stage: changes
   image: lotusnoir/gitlab_pipeline_bot:latest
+  needs:
+    - job: molecule_debian12
+      optional: true
+    - job: molecule_debian11
+      optional: true
+    - job: molecule_debian13
+      optional: true
+    - job: molecule_oraclelinux10
+      optional: true
+    - job: molecule_oraclelinux8
+      optional: true
+    - job: molecule_oraclelinux9
+      optional: true
+    - job: molecule_rocky10
+      optional: true
+    - job: molecule_rocky8
+      optional: true
+    - job: molecule_rocky9
+      optional: true
+    - job: molecule_ubuntu22
+      optional: true
+    - job: molecule_ubuntu24
+      optional: true
+    - job: molecule_ubuntu26
+      optional: true
   artifacts:
     paths:
       - CHANGELOG.md
